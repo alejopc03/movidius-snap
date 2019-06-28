@@ -1,0 +1,13 @@
+#!/bin/sh -e
+
+# Create a group "myriad-users" to control movidius (myriad) devices
+# TODO: Find a workaround or correct way for Ubuntu Desktop: /var/lib/extrausers does not exist
+sudo addgroup --extrausers myriad-users
+echo "Group Created"
+# TODO: add user to myriad-users group. Right now, "adduser --extrausers" is not working in ubuntu core
+# Load rules for myriad devices
+sudo cp "$INTEL_OPENVINO_DIR/deployment_tools/inference_engine/external/97-myriad-usbboot.rules" /etc/udev/rules.d/
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+echo "Rules reloaded"
+#sudo ldconfig # TODO: Find a workaround, this is not working in Ubuntu Core (But seems like it is not needed)
