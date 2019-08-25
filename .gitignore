@@ -1,2 +1,4 @@
 # Ignore OpenVINO libraries
 openvino/
+movidius_test/images/
+movidius_test/*.jpg
