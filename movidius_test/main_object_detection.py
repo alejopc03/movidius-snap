@@ -13,11 +13,18 @@ from time import time
 from openvino.inference_engine import IENetwork, IEPlugin
 
 
+def readLabels(labels_path):
+    label_map = None
+    with open(labels_path, 'r') as f:
+        label_map = [x.strip() for x in f]
+
+    return label_map
+
 def build_argparser():
     parser = ArgumentParser(add_help=False)
     args = parser.add_argument_group('Options')
     args.add_argument("-m", "--model", help="Required. Path to an .xml file with a trained model.", type=str, default='{0}/models/ssd_mobilenet_v2_FP16/ssd_mobilenet_v2.xml')
-    args.add_argument("-i", "--input", help="Required. Path to a folder with images or path to an image files", type=str, nargs="+", default='./images/plate-references/cr-truck-plate1.jpg')
+    args.add_argument("-i", "--input", help="Required. Path to a folder with images or path to an image files", type=str, default='./images/plate-references/cr-truck-plate1.jpg')
     args.add_argument("-pd", "--plugin_dir", help="Optional. Path to a plugin folder", type=str, default=None)
     args.add_argument("-d", "--device", help="Optional. Specify the target device to infer on; CPU, GPU, FPGA, HDDL, MYRIAD or HETERO: is "
                            "acceptable. The sample will look for a suitable plugin for device specified. Default "
@@ -37,6 +44,9 @@ def main():
     print(args.model)
     model_xml = args.model
     model_bin = os.path.splitext(model_xml)[0] + ".bin"
+
+    #Read labels
+    labels = readLabels(args.labels)
 
     # Plugin initialization for specified device and load extensions library if specified
     plugin = IEPlugin(device=args.device, plugin_dirs=args.plugin_dir)
@@ -93,8 +103,9 @@ def main():
         xmax = int(obj[5] * initial_w)
         ymax = int(obj[6] * initial_h)
         class_id = int(obj[1])
-        if obj[2] > 0.5:
-            print("Detected: {0} ({1},{2},{3},{4})".format(class_id, xmin, ymin, xmax, ymax))
+        label = labels[class_id - 1]
+        if obj[2] > 0.6:
+            print("Detected: {0} ({1},{2},{3},{4})".format(label, xmin, ymin, xmax, ymax))
             color = (0, 255, 0)
             try:
                 cv2.rectangle(original_img, (xmin, ymin), (xmax, ymax), color, 2)
